@@ -19,7 +19,6 @@ func _ready():
 			child.connect("panel_hidden", _panel_hidden)
 		
 func _panel_shown(panel): 
-	
 	if mode == e_mode.multiple: return 
 	
 	for p in panels: 

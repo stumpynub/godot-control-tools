@@ -40,7 +40,6 @@ class_name TweenPanel
 			set_visible_pos = false
 			visible_pos = global_position
 
-
 @export_group("testing")
 @export var test_show: bool : 
 	set(is_set): 
@@ -68,7 +67,6 @@ func _ready():
 		show_panel()
 
 func hide_panel(): 
-	
 	if show_tween != null and show_tween.is_running(): 
 		show_tween.kill()
 	
@@ -94,7 +92,6 @@ func hide_panel():
 	emit_signal("panel_hidden")
 	
 func show_panel(): 
-	
 	if hide_tween != null and hide_tween.is_running(): 
 		hide_tween.kill()
 	
