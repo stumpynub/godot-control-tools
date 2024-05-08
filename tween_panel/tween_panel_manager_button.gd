@@ -15,12 +15,18 @@ enum e_button_type {
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	
+	if get_parent() is TweenPanelManager: 
+		manager = get_parent()
+	
 	if manager != null: 
 		panel_index = clamp(panel_index, 0,  manager.panels.size())
 		
 func _pressed(): 
 	if !manager: return
-	if manager.panels[panel_index] == null: return 
+
+	print(manager.panels.size() - 1)
+	if panel_index >= manager.panels.size(): return 
 	
 	var panel: TweenPanel = manager.panels[panel_index] 
 	

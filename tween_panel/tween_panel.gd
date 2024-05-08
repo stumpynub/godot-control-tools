@@ -8,7 +8,10 @@ class_name TweenPanel
 @export var start_visible = false 
 
 @export var hidden_pos: Vector2 
+@export var hidden_rot: float 
+
 @export var visible_pos: Vector2 
+@export var visible_rot: float 
 
 @export_group("actions")
 @export var show_action: String = ""
@@ -31,17 +34,31 @@ class_name TweenPanel
 
 @export_category("tool")
 @export_group("setters")
+@export_subgroup("hidden setters")
 @export var set_hidden_pos: bool : 
 	set(is_set): 
 		if is_set: 
 			set_hidden_pos = false
 			hidden_pos = global_position
+			
+@export var set_hidden_rot: bool : 
+	set(is_set): 
+		if is_set: 
+			set_hidden_rot = false
+			hidden_rot = rotation
 
+@export_subgroup("visbile setters")
 @export var set_visible_pos: bool : 
 	set(is_set): 
 		if is_set: 
 			set_visible_pos = false
 			visible_pos = global_position
+			
+@export var set_visible_rot: bool : 
+	set(is_set): 
+		if is_set: 
+			set_visible_rot = false
+			visible_rot = rotation
 
 @export_group("testing")
 @export var test_show: bool : 
@@ -68,6 +85,7 @@ func _ready():
 	else: 
 		visible = true 
 		show_panel()
+	get_transform()
 
 func hide_panel(): 
 	if show_tween != null and show_tween.is_running(): 
@@ -84,8 +102,8 @@ func hide_panel():
 	hide_tween.set_trans(hide_transition_type)
 	hide_tween.set_speed_scale(hide_speed_scale)
 	hide_tween.tween_property(self, "position", hidden_pos, hide_time)
+	hide_tween.tween_property(self, "rotation", deg_to_rad(hidden_rot), hide_time)
 	hide_tween.tween_property(self, "modulate", color, hide_time)
-	
 	
 	await  hide_tween.finished
 	
@@ -112,6 +130,7 @@ func show_panel():
 	show_tween.set_trans(show_transition_type)
 	show_tween.set_speed_scale(show_speed_scale)
 	show_tween.tween_property(self, "position", visible_pos, show_time)
+	show_tween.tween_property(self, "rotation", deg_to_rad(visible_rot), hide_time)
 	show_tween.tween_property(self, "modulate", color, show_time)
 		
 	is_hidden = false 
@@ -125,13 +144,13 @@ func _test_show():
 	show_panel()
 	
 func _input(event):
-	if show_action != "" and InputMap.has_action(show_action): 
-		if event.is_action_pressed(show_action) && is_hidden: 
+	if show_action != "" and InputMap.has_action(show_action.strip_edges()): 
+		if event.is_action_pressed(show_action.strip_edges()) && is_hidden: 
 			show_panel()
 			return 
 			
-	if hide_action != "" and InputMap.has_action(hide_action):
-		if event.is_action_pressed(hide_action) && !is_hidden: 
+	if hide_action != "" and InputMap.has_action(hide_action.strip_edges()):
+		if event.is_action_pressed(hide_action.strip_edges()) && !is_hidden: 
 			hide_panel()
 			return 
 
