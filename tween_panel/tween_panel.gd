@@ -10,6 +10,9 @@ class_name TweenPanel
 @export var hidden_pos: Vector2 
 @export var visible_pos: Vector2 
 
+@export_group("actions")
+@export var show_action: String = ""
+@export var hide_action: String = ""
 
 @export_group("hide settings")
 @export var hide_time = 0.5
@@ -120,3 +123,15 @@ func _test_hide():
 	
 func _test_show(): 
 	show_panel()
+	
+func _input(event):
+	if show_action != "" and InputMap.has_action(show_action): 
+		if event.is_action_pressed(show_action) && is_hidden: 
+			show_panel()
+			return 
+			
+	if hide_action != "" and InputMap.has_action(hide_action):
+		if event.is_action_pressed(hide_action) && !is_hidden: 
+			hide_panel()
+			return 
+
