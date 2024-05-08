@@ -16,7 +16,7 @@ func _process(delta):
 		
 func _pressed(): 
 	if !manager: return
-	if manager.panels[panel_index - 1] == null: return 
+	if manager.panels[panel_index ] == null: return 
 	
 	var panel: TweenPanel = manager.panels[panel_index] 
 	
