@@ -1,6 +1,13 @@
 @tool
 extends TweenPanel
 
+
+enum completion_context { 
+	int_range, 
+	float_range,
+}
+
+@export var config_path = "res://control_tools/console/console.cfg"
 @export var line_edit: LineEdit = null
 @export var console_text: RichTextLabel = null
 @export var target_label: Label = null
@@ -8,7 +15,7 @@ extends TweenPanel
 var target_object: Object = self 
 var command_string_array: PackedStringArray
 var commands = {}
-
+var cfg: ConfigFile
 
 func _ready():
 	super()
@@ -21,6 +28,8 @@ func _ready():
 	panel_shown.connect(_panel_shown)
 	
 	target_label.text = "target object: " + str(target_object)
+	
+	config.call_deferred()
 	
 	add_default_commands()
 
@@ -46,8 +55,8 @@ func add_default_commands():
 		console_text.text = ""
 	)
 	
-	add_command("root: ", "sets target object to the scene root", func() : 
-		set_target_object(get_tree())
+	add_command("root", "sets target object to the scene root", func() : 
+		set_target_object(get_tree().root)
 	)
 	
 	add_command("echo", "prints variables to the console", func() : 
@@ -114,6 +123,53 @@ func add_default_commands():
 				target_object.set(args[0], bool(args[1]))
 	)
 	
+	add_command("quit", "quit the game", func() : 
+		get_tree().quit()
+	) 
+	
+	add_command("lyt", "set console layout", func() : 
+		var args = parse_args("lyt")
+		
+		if args.size() > 0 and int(args[0]) <= 15 : 
+			anchors_preset = int(args[0])
+			hidden_pos.x = position.x
+			visible_pos = position
+			
+			set_config_value("layout", int(args[0]))
+			
+	,[], completion_context.int_range)
+	
+	add_command("alpha", "sets transparency", func() : 
+		var args = parse_args("alpha")
+		
+		if args.size() > 0 and float(args[0]) <= 1 and float(args[0]) >= 0.1: 
+			modulate.a = float(args[0])
+			set_config_value("alpha", float(args[0]))
+			
+	,[], completion_context.int_range)
+	
+	add_command("camgo", "sets camera position to target node position", func() : 
+		
+		var cam3D = get_viewport().get_camera_3d()
+		var cam2D = get_viewport().get_camera_2d()
+		
+		if cam3D != null and target_object is Node3D: 
+			cam3D.global_position = target_object.global_position
+		if cam2D != null and target_object is Node2D: 
+			cam2D.global_position = target_object.global_position
+	)
+	
+	add_command("ownergo", "sets camera owner position to target node position", func() : 
+		
+		var cam3D = get_viewport().get_camera_3d()
+		var cam2D = get_viewport().get_camera_2d()
+		
+		if cam3D != null and target_object is Node3D: 
+			cam3D.owner.global_position = target_object.global_position
+		if cam2D != null and target_object is Node2D: 
+			cam2D.owner.global_position = target_object.global_position
+	)
+	
 func set_target_object(obj: Object): 
 	target_object = obj
 	target_label.text = "target object: " + str(target_object)
@@ -140,12 +196,40 @@ func parse_args(cmd) -> Array[String]:
 func add_line(txt): 
 	console_text.text += "\n" + txt
 
-func add_command(cmd, description, callable: Callable, args=[]): 
+func add_command(cmd, description, callable: Callable, args=[], ctx=null): 
 	commands[cmd] = {
 		"description": description, 
-		"action": callable.bindv(args)
+		"action": callable.bindv(args), 
+		"ctx": ctx
 	}
+
+func config(): 
+	anchors_preset = get_config_value("layout", 0)
+	modulate.a = float(get_config_value("alpha", 0.1))
+	show_alpha = float(get_config_value("alpha", 0.1))
+	hidden_pos.x = position.x
+	visible_pos = position
 	
+
+func get_cfg() -> ConfigFile: 
+	var file = ConfigFile.new()
+	var err = file.load(config_path)
+	
+	if err: 
+		print(err)
+		
+	return file
+
+func set_config_value(name, value): 
+	var file = get_cfg()
+	file.set_value("", name, value)
+	file.save(config_path)
+
+func get_config_value(name, default):
+	var file = get_cfg()
+	
+	return get_cfg().get_value("", name, default) 
+
 func _panel_shown(panel): 
 	line_edit.grab_focus.call_deferred()
 
@@ -160,7 +244,23 @@ func _text_changed(text):
 			var index = command_string_array.find(s)
 			command_string_array.remove_at(index)
 
-func _try_completion(): 
+func _text_submitted(text: String): 
+	add_line( text)
+	
+	command_string_array = text.strip_edges().split(" ")
+	
+	for cmd in commands: 
+		if valid_command(cmd): 
+			var args = parse_args("cmd")
+			commands.get(cmd)["action"].call()
+	
+	if target_object == null: 
+		target_object = get_tree().root
+	
+	line_edit.clear()
+	console_text.get_v_scroll_bar().set_deferred("value", console_text.get_v_scroll_bar().max_value)  
+
+func _try_completion(ctx=null): 
 	var split = line_edit.text.split(" ")
 	
 	match split.size(): 
@@ -177,7 +277,6 @@ func _try_completion():
 			
 		1: 
 			var prefix = split[0]
-			var potentials = []
 			
 			commands.keys().sort()
 			
@@ -186,7 +285,7 @@ func _try_completion():
 					line_edit.text = key
 					line_edit.caret_column = line_edit.text.length()
 					return 
-					
+			
 			var index = 0 
 			if commands.keys().has(line_edit.text): 
 				index = commands.keys().find(line_edit.text)
@@ -201,6 +300,21 @@ func _try_completion():
 			var index = 0 
 			
 			if !target_object is Node: return 
+			
+			if commands.has(split[0]) and commands.get(split[0]).ctx != null:
+				match commands.get(split[0]).ctx: 
+					completion_context.int_range: 
+						var inpt = split[1]
+						var i = 0
+						
+						if inpt == "": 
+							line_edit.text += str(i)
+						elif int(inpt) >= 0:
+							i = int(inpt) + 1
+							split[1] = str(i)
+							line_edit.text = " ".join(split)
+						line_edit.caret_column = line_edit.text.length()
+				return 
 			
 			if split[1] == "": 
 				line_edit.text += "./" + str(target_object.get_child(index).name)
@@ -220,7 +334,7 @@ func _try_completion():
 				line_edit.text = " ./".join(split)
 			
 	line_edit.caret_column = line_edit.text.length()
-	
+
 func _input(event):
 	super(event)
 	
@@ -231,20 +345,4 @@ func _input(event):
 	if event.is_action_pressed("ui_focus_next"): 
 		_try_completion()
 
-func _text_submitted(text: String): 
-	add_line( text)
-	
-	command_string_array = text.strip_edges().split(" ")
-	
-	for cmd in commands: 
-		if valid_command(cmd): 
-			var args = parse_args("cmd")
-			commands.get(cmd)["action"].call()
-	
-	if target_object == null: 
-		target_object = get_tree().root
-	
-	line_edit.clear()
-	console_text.get_v_scroll_bar().set_deferred("value", console_text.get_v_scroll_bar().max_value)  
-	
 

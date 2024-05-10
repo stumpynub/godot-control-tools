@@ -30,7 +30,7 @@ class_name TweenPanel
 @export var show_ease_type: Tween.EaseType
 @export var show_transition_type: Tween.TransitionType
 @export var show_pause_mode: Tween.TweenPauseMode
-
+@export var show_alpha = 1.0
 
 @export_category("tool")
 @export_group("setters")
@@ -116,7 +116,7 @@ func show_panel():
 		hide_tween.kill()
 	
 	var color = modulate
-	color.a = 1.0
+	color.a = show_alpha
 	
 	show_tween = get_tree().create_tween()
 	show_tween.set_parallel(true)

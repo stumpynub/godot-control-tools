@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cbf4kuyrc5686"]
+[gd_scene load_steps=11 format=3 uid="uid://cbf4kuyrc5686"]
 
 [ext_resource type="Script" path="res://control_tools/console/console.gd" id="1_kmdi6"]
 [ext_resource type="FontFile" uid="uid://ddfl11npi2r1t" path="res://control_tools/console/fonts/MonaspaceNeon-SemiBold.otf" id="1_rjeak"]
@@ -6,13 +6,23 @@
 [ext_resource type="FontFile" uid="uid://civ2ko045nlcr" path="res://control_tools/console/fonts/MonaspaceNeon-ExtraLight.otf" id="3_facdo"]
 [ext_resource type="FontFile" uid="uid://bpvvgbl2446v8" path="res://control_tools/console/fonts/MonaspaceNeon-Light.otf" id="3_mkn37"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y6ckt"]
+bg_color = Color(0, 0.662745, 0.498039, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h85ny"]
+content_margin_left = 5.0
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ys6jd"]
 bg_color = Color(0, 0, 0, 0.839216)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0, 0.662745, 0.498039, 1)
+border_color = Color(0, 0.662745, 0.498039, 0.403922)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -24,14 +34,12 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0, 0.662745, 0.498039, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(0, 0.662745, 0.498039, 0.403922)
 
 [sub_resource type="Theme" id="Theme_c1q8g"]
 default_font = ExtResource("3_mkn37")
+HScrollBar/styles/grabber = SubResource("StyleBoxFlat_y6ckt")
+HScrollBar/styles/scroll = SubResource("StyleBoxEmpty_h85ny")
 Label/colors/font_color = Color(0, 0.662745, 0.498039, 1)
 Label/colors/font_outline_color = Color(1, 1, 1, 1)
 Label/colors/font_shadow_color = Color(0, 0, 0, 0)
@@ -53,37 +61,36 @@ RichTextLabel/fonts/bold_font = ExtResource("1_rjeak")
 RichTextLabel/fonts/italics_font = ExtResource("2_o8foq")
 RichTextLabel/fonts/normal_font = ExtResource("3_facdo")
 RichTextLabel/styles/normal = SubResource("StyleBoxFlat_q24ni")
+VScrollBar/styles/grabber = SubResource("StyleBoxFlat_y6ckt")
+VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_h85ny")
 
 [node name="VBoxContainer" type="VBoxContainer" node_paths=PackedStringArray("line_edit", "console_text", "target_label")]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = -680.0
-offset_bottom = -176.0
-grow_horizontal = 2
-grow_vertical = 2
+custom_minimum_size = Vector2(450, 500)
+offset_right = 450.0
+offset_bottom = 500.0
+pivot_offset = Vector2(288, 328)
 theme = SubResource("Theme_c1q8g")
 alignment = 1
 script = ExtResource("1_kmdi6")
 line_edit = NodePath("LineEdit")
 console_text = NodePath("RichTextLabel")
 target_label = NodePath("LabelTarget")
-hidden_pos = Vector2(24, -456)
-visible_pos = Vector2(24, 24)
+hidden_pos = Vector2(0, -864)
 show_action = "term"
 hide_action = "term"
 hide_time = 0.1
+hide_transition_type = 5
 show_time = 0.2
 show_ease_type = 1
-show_transition_type = 6
+show_transition_type = 5
+show_alpha = null
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 2
 bbcode_enabled = true
-text = "[wave][center]
+text = "[wave]
                      /$$      
                     | $$      
  /$$$$$$$  /$$   /$$| $$$$$$$ 
@@ -92,10 +99,10 @@ text = "[wave][center]
 | $$  | $$| $$  | $$| $$  | $$
 | $$  | $$|  $$$$$$/| $$$$$$$/
 |__/  |__/ \\______/ |_______/ 
-                            
-[/center][/wave]"
-scroll_following = true
+   [/wave]
+"
 autowrap_mode = 0
+selection_enabled = true
 metadata/_edit_use_anchors_ = true
 
 [node name="LineEdit" type="LineEdit" parent="."]

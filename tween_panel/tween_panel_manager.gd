@@ -9,7 +9,6 @@ enum e_mode {
 
 @export var mode: e_mode = e_mode.single
 var panels: Array[TweenPanel]
-
 func _ready():
 	for child in get_children():
 		if child is TweenPanel: 
