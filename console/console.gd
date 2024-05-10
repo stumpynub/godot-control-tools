@@ -22,6 +22,10 @@ func _ready():
 	
 	target_label.text = "target object: " + str(target_object)
 	
+	add_default_commands()
+
+func add_default_commands(): 
+	
 	add_command("help", "shows all commands", func() : 
 		add_line("\n")
 		add_line("[b]Commands:[/b]")
@@ -29,11 +33,20 @@ func _ready():
 			add_line("[indent]" + str(cmd) + ": " + commands.get(cmd)["description"] + "[/indent]")
 	)
 	
+	add_command("call", "call method on target object", func() : 
+		var args = parse_args("call")
+		
+		if args.size() > 0 and target_object.has_method(args[0]): 
+			var new_args = args.duplicate()
+			new_args.remove_at(0)
+			target_object.callv(args[0], new_args)
+	)
+	
 	add_command("clear", "clears all console text", func() : 
 		console_text.text = ""
 	)
 	
-	add_command("tree:", "sets target object to scene tree", func() : 
+	add_command("root: ", "sets target object to the scene root", func() : 
 		set_target_object(get_tree())
 	)
 	
@@ -80,7 +93,7 @@ func _ready():
 			var obj = target_object.get_node(args[0])
 			
 			if obj == target_object: 
-				target_object = get_tree().root
+				set_target_object(obj.get_parent())
 				
 			obj.queue_free()
 	)
@@ -101,6 +114,37 @@ func _ready():
 				target_object.set(args[0], bool(args[1]))
 	)
 	
+func set_target_object(obj: Object): 
+	target_object = obj
+	target_label.text = "target object: " + str(target_object)
+
+func valid_command(command) -> bool: 
+	if command_string_array.size() > 0 and command_string_array[0] == command.to_lower():
+		return true 
+	return false
+
+func parse_args(cmd) -> Array[String]: 
+	var args: Array[String] = []
+	var index = 0 
+	
+	for i in command_string_array.size(): 
+		if cmd == command_string_array[i]: 
+			index = i
+			
+	for x in command_string_array.size(): 
+		if x > index:
+			if !command_string_array[x].begins_with("-"): 
+				args.append(command_string_array[x]) 
+	return args
+
+func add_line(txt): 
+	console_text.text += "\n" + txt
+
+func add_command(cmd, description, callable: Callable, args=[]): 
+	commands[cmd] = {
+		"description": description, 
+		"action": callable.bindv(args)
+	}
 	
 func _panel_shown(panel): 
 	line_edit.grab_focus.call_deferred()
@@ -116,7 +160,7 @@ func _text_changed(text):
 			var index = command_string_array.find(s)
 			command_string_array.remove_at(index)
 
-func try_completion(): 
+func _try_completion(): 
 	var split = line_edit.text.split(" ")
 	
 	match split.size(): 
@@ -132,11 +176,13 @@ func try_completion():
 			line_edit.text = str(commands.keys()[index])
 			
 		1: 
-			var suffix = split[0]
+			var prefix = split[0]
 			var potentials = []
 			
+			commands.keys().sort()
+			
 			for key in commands.keys(): 
-				if key.begins_with(suffix) and !line_edit.text.contains(key): 
+				if key.to_lower().begins_with(prefix.to_lower()) and !line_edit.text.contains(key): 
 					line_edit.text = key
 					line_edit.caret_column = line_edit.text.length()
 					return 
@@ -160,13 +206,15 @@ func try_completion():
 				line_edit.text += "./" + str(target_object.get_child(index).name)
 			else: 
 				for child in target_object.get_children(): 
-					if child.name.begins_with(split[1]) and child.name != split[1]: 
+					if child.name.to_lower().begins_with(split[1].to_lower()) and child.name != split[1]: 
 						index = child.get_index()
-					elif split[1] == child.name: 
+					elif split[1].trim_prefix("./") == child.name: 
+						
 						index = child.get_index() + 1
-					
+				
 				if index >= target_object.get_children().size(): 
 					index = 0 
+					
 				split[1] = str(target_object.get_child(index).name)
 				
 				line_edit.text = " ./".join(split)
@@ -176,8 +224,12 @@ func try_completion():
 func _input(event):
 	super(event)
 	
+	
+	if is_hidden: 
+		return 
+		
 	if event.is_action_pressed("ui_focus_next"): 
-		try_completion()
+		_try_completion()
 
 func _text_submitted(text: String): 
 	add_line( text)
@@ -195,50 +247,4 @@ func _text_submitted(text: String):
 	line_edit.clear()
 	console_text.get_v_scroll_bar().set_deferred("value", console_text.get_v_scroll_bar().max_value)  
 	
-func set_target_object(obj: Object): 
-	target_object = obj
-	target_label.text = "target object: " + str(target_object)
 
-func valid_command(command) -> bool: 
-	if command_string_array.size() > 0 and command_string_array[0] == command.to_lower():
-		return true 
-	return false
-
-func parse_args(flag) -> Array[String]: 
-	var args: Array[String] = []
-	var index = 0 
-	
-	for i in command_string_array.size(): 
-		if flag == command_string_array[i]: 
-			index = i
-			
-	for x in command_string_array.size(): 
-		if x > index:
-			if !command_string_array[x].begins_with("-"): 
-				args.append(command_string_array[x]) 
-	return args
-
-func add_line(txt): 
-	console_text.text += "\n" + txt
-
-func _process_flags(): 
-	
-	if !parse_args("-setn").is_empty(): 
-		var args = parse_args("-setn")
-		
-		var obj = target_object.get(args[0].to_lower())
-		if args.size() > 0 and obj and obj is Object: 
-			set_target_object(target_object.get(args[0]))
-	
-	if !parse_args("-call").is_empty(): 
-		var args = parse_args("-call")
-		var callable = Callable(target_object, args[0])
-		args.remove_at(0)
-		
-		callable.callv(args)
-
-func add_command(cmd, description, callable: Callable, args=[]): 
-	commands[cmd] = {
-		"description": description, 
-		"action": callable.bindv(args)
-	}
