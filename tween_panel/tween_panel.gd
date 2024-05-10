@@ -85,7 +85,6 @@ func _ready():
 	else: 
 		visible = true 
 		show_panel()
-	get_transform()
 
 func hide_panel(): 
 	if show_tween != null and show_tween.is_running(): 
