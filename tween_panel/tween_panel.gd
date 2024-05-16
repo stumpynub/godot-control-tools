@@ -4,7 +4,6 @@ extends Control
 
 class_name TweenPanel
 
-
 @export var start_visible = false 
 
 @export var hidden_pos: Vector2 
@@ -79,6 +78,10 @@ signal panel_hidden;
 signal panel_shown(panel: TweenPanel); 
 
 func _ready(): 
+	
+	if Engine.is_editor_hint(): 
+		return 
+		
 	if !start_visible: 
 		visible = false
 		hide_panel()

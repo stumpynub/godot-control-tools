@@ -4,7 +4,8 @@ class_name TweenPanelButton
 
 enum e_button_type { 
 	show, 
-	hide
+	hide, 
+	toggle
 }
 
 @export var button_type: e_button_type = e_button_type.hide
@@ -22,5 +23,10 @@ func _pressed():
 			panel.show_panel()
 		e_button_type.hide: 
 			panel.hide_panel()
-
+		e_button_type.toggle: 
+			if panel.is_hidden: 
+				panel.show_panel()
+			else: 
+				panel.hide_panel()
+			
 	
